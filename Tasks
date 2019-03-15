@@ -1,0 +1,10 @@
+- Create FCFS algorithm
+- Create other algorithms
+-- SJB
+-- Preemptions
+--- SRT
+---- Calculate estimate remaining time
+--- Round Robin
+- Printing to stdout
+- Printing summary to output file
+- Error handling
