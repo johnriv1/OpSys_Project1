@@ -49,6 +49,7 @@ void paramater_alg(double lambda, int upper_bound, struct process* proc)
 			((*proc).IO_burst_times)[i] = ceil(exp_dist_eq(lambda, upper_bound));
 		}
 	}
+	(*proc).terminated = 0;
 }
 
 void get_next_event(struct process* CPU_BURST_PROCESS, struct process* least_rem_IO_time_Process, struct process* all_processes, int next_arrival_index, int num_processes, int ** next_event_array, int time)
@@ -213,6 +214,10 @@ void update_next_IO_finish(struct process** least_rem_IO_time_Process, struct pr
 				(*least_rem_IO_time_Process) = (*IO_PROCESSES)[i];
 			}
 		}
+	}
+	else
+	{
+		(*least_rem_IO_time_Process) = NULL;
 	}
 }
 
@@ -383,14 +388,14 @@ int main( int argc, char** argv )
 	
 	/* FIRST COME FIRST SERVE *////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////
-	//while (!finished)
+
 	
 	printf("time %dms: Simulator started for FCFS ", time);
 	print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
-	
-	while (test_int != 10)
+	while (!finished)
+	//while (test_int != 32)
 	{
-		test_int++;
+		//test_int++;
 		#if 0
 		//first process to come in
 		if (READY_QUEUE_size == 0 && IO_PROCESSES_size == 0 && CPU_BURST_PROCESS == NULL)
@@ -435,14 +440,16 @@ int main( int argc, char** argv )
 				time += CPU_BURST_PROCESS->CPU_remaining_time;
 				CPU_BURST_PROCESS->CPU_remaining_time -= CPU_BURST_PROCESS->CPU_remaining_time;
 				CPU_BURST_PROCESS->num_CPU_bursts_remaining -= 1;
-				printf("time %dms: Process %c completed a CPU burst; %d bursts to go ", time, CPU_BURST_PROCESS->id, CPU_BURST_PROCESS->num_CPU_bursts_remaining);
-				print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
+
 				/*increment CPU burst index and set remaining time to new corresponding CPU burst*/
 				/*only do this if there is a next CPU burst*/
 				/*also, if not last burst, process does IO burst, 
 					which is denoted by it going into I/O processes array*/
 				if (CPU_BURST_PROCESS->num_CPU_bursts_remaining > 0 )
-				{
+				{				
+					printf("time %dms: Process %c completed a CPU burst; %d bursts to go ", time, CPU_BURST_PROCESS->id, CPU_BURST_PROCESS->num_CPU_bursts_remaining);
+					print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
+					
 					CPU_BURST_PROCESS->curr_IO_index = CPU_BURST_PROCESS->curr_CPU_index;
 					CPU_BURST_PROCESS->IO_remaining_time = CPU_BURST_PROCESS->IO_burst_times[CPU_BURST_PROCESS->curr_IO_index];
 					
@@ -469,6 +476,14 @@ int main( int argc, char** argv )
 					
 					CPU_BURST_PROCESS = NULL;
 				}
+				else
+				{
+					printf("time %dms: Process %c terminated ", time, CPU_BURST_PROCESS->id);
+					time += (context_switch_time)/2;
+					print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
+					CPU_BURST_PROCESS->terminated = 1;
+					CPU_BURST_PROCESS = NULL;
+				}
 				/*if ready Queue has a process ready, put it into the CPU*/
 				if (	READY_QUEUE_size > 0 )
 				{
@@ -480,13 +495,14 @@ int main( int argc, char** argv )
 					print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
 				}
 			}
-			finished = 1;
+			//finished = 1;
 			/*next event is PROCESS I/O FINISHES*/
 			if (next_event_array[1] == 1)
 			{
 				//put it on to the ready queue. Logic for putting it into the queue will change in each alg.
+				time += least_rem_IO_time_Process->IO_remaining_time;
 				printf("time %dms: Process %c completed I/O; added to ready queue ", time, least_rem_IO_time_Process->id);
-				time += (context_switch_time)/2;
+				//time += (context_switch_time)/2;
 				queue_index = Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, "FCFS", least_rem_IO_time_Process);
 				//find and take process out of IO array
 				for (int i = 0; i < IO_PROCESSES_size; i++)
@@ -537,13 +553,28 @@ int main( int argc, char** argv )
 				}
 			}
 			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size);
-			update_next_IO_finish(&least_rem_IO_time_Process, &IO_PROCESSES, IO_PROCESSES_size);
+			update_next_IO_finish(&least_rem_IO_time_Process, &IO_PROCESSES, IO_PROCESSES_size);	
+				
+			finished = 1;
+			for (int i = 0; i < num_processes; i++)
+			{
+				if (all_processes[i].terminated == 0)
+				{
+					finished = 0;
+				}
+			}
 		}
+		printf("time %dms: Simulator ended for FCFS ", time);
+		print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
 		/*check to see if we're done*/
+		/*
 		if (READY_QUEUE_size == 0 && IO_PROCESSES_size == 0 && CPU_BURST_PROCESS == NULL && next_arrival_index >= num_processes)
 		{
+			printf("HELLO");
 			finished = 1;
 		}
+		*/
+
 	//}
 }
 
