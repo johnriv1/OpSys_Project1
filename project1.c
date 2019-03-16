@@ -521,6 +521,7 @@ int main( int argc, char** argv )
 				queue_index = Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, "FCFS", &all_processes[next_arrival_index]);
 				all_processes[next_arrival_index].curr_CPU_index = 0;
 				all_processes[next_arrival_index].CPU_remaining_time = all_processes[next_arrival_index].CPU_burst_times[0];
+				time = (all_processes[next_arrival_index].arrival_time);
 				printf("time %dms: Process %c arrived; added to ready queue ", time, all_processes[next_arrival_index].id);
 				print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
 				next_arrival_index += 1;
