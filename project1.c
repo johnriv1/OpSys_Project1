@@ -5,7 +5,17 @@
 #include <math.h> /* trunc */
 
 #include "process.h"
+/*
+Sample output:
 
+a.out 2 0.01 200 1 4 0.5 120 > output02.txt
+
+a.out 2 0.01 200 2 4 0.5 120 > output03.txt
+
+a.out 2 0.01 200 12 4 0.5 120 > output04.txt
+
+a.out 73 0.001 3000 12 4 0.5 950 > output05.txt
+*/
 double exp_dist_eq(double lambda, int upper_bound)
 {
 	int iterations = 1;
@@ -431,6 +441,7 @@ int main( int argc, char** argv )
 					
 					printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms ", 
 						time, CPU_BURST_PROCESS->id, (time + (context_switch_time/2) + CPU_BURST_PROCESS->IO_remaining_time));
+					print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
 					
 					CPU_BURST_PROCESS->curr_CPU_index += 1;
 					CPU_BURST_PROCESS->CPU_remaining_time = CPU_BURST_PROCESS->CPU_burst_times[CPU_BURST_PROCESS->curr_CPU_index];
