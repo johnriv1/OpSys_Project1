@@ -384,15 +384,21 @@ int main( int argc, char** argv )
 	/* FIRST COME FIRST SERVE *////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////
 	//while (!finished)
-	while (test_int != 5)
+	
+	printf("time %dms: Simulator started for FCFS ", time);
+	print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
+	
+	while (test_int != 10)
 	{
 		test_int++;
+		#if 0
 		//first process to come in
 		if (READY_QUEUE_size == 0 && IO_PROCESSES_size == 0 && CPU_BURST_PROCESS == NULL)
 		{
 			//first process to arrive occupies the cpu
 			CPU_BURST_PROCESS = &all_processes[0];
 			time += (CPU_BURST_PROCESS->arrival_time);
+			queue_index = Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, "FCFS", least_rem_IO_time_Process);
 			printf("time %dms: Process %c arrived; added to ready queue ", time, all_processes[next_arrival_index].id);
 			print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
 			//update time to first arrival
@@ -412,6 +418,7 @@ int main( int argc, char** argv )
 		}
 		else
 		{
+		#endif
 			/*get next event(s)
 			 function returns array that will only have multiple entries if multiple events occur at once*/
 			int* next_event_array = calloc(3, sizeof(int));
@@ -536,7 +543,7 @@ int main( int argc, char** argv )
 		{
 			finished = 1;
 		}
-	}
+	//}
 }
 
 
