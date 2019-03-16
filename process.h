@@ -23,6 +23,9 @@ struct process
 	int curr_CPU_arrival_time;
 	int curr_IO_arrival_time;
 	
+	/*if 0, process is not terminated. If 1, process has terminated*/
+	int terminated ;
+	
 };
 
 /*https://stackoverflow.com/questions/6105513/need-help-using-qsort-with-an-array-of-structs*/
