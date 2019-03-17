@@ -38,6 +38,14 @@ int compare_arrival_time(const void *p1, const void *p2)
       return -1;
    else if (elem1->arrival_time > elem2->arrival_time)
       return 1;
+   /*if times are the same, sort by alphabetical order*/
+   else if (elem1->arrival_time == elem2->arrival_time)
+   {
+  		if (elem1->id < elem2->id)
+  			return -1;
+  		else
+  			return 1;
+   }
    else
       return 0;
 }
