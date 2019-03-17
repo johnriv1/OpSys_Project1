@@ -62,25 +62,25 @@ void get_next_event(struct process* CPU_BURST_PROCESS, struct process* least_rem
 	if (CPU_BURST_PROCESS != NULL)
 	{
 		CPU_burst_completion_time = (CPU_BURST_PROCESS->CPU_remaining_time) + time;
-		//#ifdef DEBUG_MODE
+		#ifdef DEBUG_MODE
 		printf ("   current process will finish CPU burst at %d ms\n", CPU_burst_completion_time);
-		//#endif
+		#endif
 	}
 	//if there is a process doing I/O
 	if (least_rem_IO_time_Process != NULL)
 	{
 		IO_burst_completion_time = (least_rem_IO_time_Process->IO_remaining_time) + time;
-		//#ifdef DEBUG_MODE
+		#ifdef DEBUG_MODE
 		printf ("   current process (%c) will finish I/O burst at %d ms\n", least_rem_IO_time_Process->id, IO_burst_completion_time);
-		//#endif
+		#endif
 	}
 	//if index is in array (it wouldn't be if we're on last process)
 	if (next_arrival_index < num_processes)
 	{
 		next_arrival_time = all_processes[next_arrival_index].arrival_time;
-		//#ifdef DEBUG_MODE
+		#ifdef DEBUG_MODE
 		printf ("   next process arrives at time %d ms\n", next_arrival_time);
-		//#endif
+		#endif
 	}
 	
 	//if values don't apply, make them large enough to not be the minimum value
@@ -208,17 +208,33 @@ void update_next_IO_finish(struct process** least_rem_IO_time_Process, struct pr
 		(*least_rem_IO_time_Process) = (*IO_PROCESSES)[0];
 		for (int i = 0; i < IO_PROCESSES_size; i++)
 		{
-			if (min_IO_time_left > ((*IO_PROCESSES)[i]->IO_remaining_time))
+			#ifdef DEBUG_MODE
+			printf("Comparing process %c (with remaining time %d) with process %c (with remaining time %d)\n", 
+				(*least_rem_IO_time_Process)->id, (*least_rem_IO_time_Process)->IO_remaining_time, (*IO_PROCESSES)[i]->id, (*IO_PROCESSES)[i]->IO_remaining_time);
+			#endif
+			if (min_IO_time_left == ((*IO_PROCESSES)[i]->IO_remaining_time))
+			{
+				if ((*least_rem_IO_time_Process)->id > (*IO_PROCESSES)[i]->id)
+				{
+					(*least_rem_IO_time_Process) = (*IO_PROCESSES)[i];
+				}
+			}
+			else if (min_IO_time_left > ((*IO_PROCESSES)[i]->IO_remaining_time))
 			{
 				//now least_rem_IO_time_Process should point to same struct as (IO_PROCESSES)[i] pointer
 				(*least_rem_IO_time_Process) = (*IO_PROCESSES)[i];
+				min_IO_time_left = (*IO_PROCESSES)[i]->IO_remaining_time;
 			}
 		}
+		#ifdef DEBUG_MODE
+		printf("next IO process to finish will be %c", (*least_rem_IO_time_Process)->id);
+		#endif
 	}
 	else
 	{
 		(*least_rem_IO_time_Process) = NULL;
 	}
+
 }
 
 void print_ready_queue(int READY_QUEUE_size, struct process*** READY_QUEUE)
@@ -388,6 +404,23 @@ int main( int argc, char** argv )
 	//points to process with least remaining I/O time
 	struct process* least_rem_IO_time_Process = NULL;
 	//sort all_processes by order of arrival
+	
+	for (int i = 0; i < num_processes; i++)
+	{
+		printf("PROCESS %c [NEW] (arrival time %d ms) %d CPU bursts\n", all_processes[i].id, all_processes[i].arrival_time, all_processes[i].num_CPU_bursts);
+		for (int j = 0; j < all_processes[i].num_CPU_bursts; j++)
+		{
+			if (j != ((all_processes[i].num_CPU_bursts) - 1))
+			{
+				printf("--> CPU burst %d ms --> I/O burst %d ms\n", (all_processes[i].CPU_burst_times)[j], (all_processes[i].IO_burst_times)[j]);
+			}
+			else
+			{
+				printf("--> CPU burst %d ms\n", (all_processes[i].CPU_burst_times)[j]);
+			}
+		}
+	}
+	
 	qsort (all_processes, num_processes, sizeof(struct process), compare_arrival_time);
 	#ifdef DEBUG_MODE
 	for (int i = 0; i < num_processes; i++)
@@ -411,7 +444,7 @@ int main( int argc, char** argv )
 	printf("time %dms: Simulator started for FCFS ", time);
 	print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
 	while (!finished)
-	//while (test_int != 32)
+	//while (test_int != 90)
 	{
 		//test_int++;
 		#if 0
@@ -444,11 +477,14 @@ int main( int argc, char** argv )
 		#endif
 			/*get next event(s)
 			 function returns array that will only have multiple entries if multiple events occur at once*/
+			#ifdef DEBUG_MODE
+			printf("\n\n");
+			#endif
 			int* next_event_array = calloc(3, sizeof(int));
 			get_next_event(CPU_BURST_PROCESS, least_rem_IO_time_Process, all_processes, next_arrival_index, num_processes, &next_event_array, time);
-			//#ifdef DEBUG_MODE
-			printf("\n\nnext_event_array is [%d, %d, %d]\n", next_event_array[0],next_event_array[1], next_event_array[2]);
-			//#endif
+			#ifdef DEBUG_MODE
+			printf("next_event_array is [%d, %d, %d]\n", next_event_array[0],next_event_array[1], next_event_array[2]);
+			#endif
 			
 			/*next event is CPU burst finishes*/
 			if (next_event_array[0] == 1)
@@ -570,8 +606,10 @@ int main( int argc, char** argv )
 				}
 			}
 
-			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size);			
+			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size);	
+			#ifdef DEBUG_MODE	
 			print_all_IO(IO_PROCESSES_size, &IO_PROCESSES, time);
+			#endif
 			update_next_IO_finish(&least_rem_IO_time_Process, &IO_PROCESSES, IO_PROCESSES_size);	
 				
 			finished = 1;
