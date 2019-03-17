@@ -62,25 +62,25 @@ void get_next_event(struct process* CPU_BURST_PROCESS, struct process* least_rem
 	if (CPU_BURST_PROCESS != NULL)
 	{
 		CPU_burst_completion_time = (CPU_BURST_PROCESS->CPU_remaining_time) + time;
-		#ifdef DEBUG_MODE
-		printf ("current process will finish CPU burst at %d ms\n", CPU_burst_completion_time);
-		#endif
+		//#ifdef DEBUG_MODE
+		printf ("   current process will finish CPU burst at %d ms\n", CPU_burst_completion_time);
+		//#endif
 	}
 	//if there is a process doing I/O
 	if (least_rem_IO_time_Process != NULL)
 	{
 		IO_burst_completion_time = (least_rem_IO_time_Process->IO_remaining_time) + time;
-		#ifdef DEBUG_MODE
-		printf ("current process will finish I/O burst at %d ms\n", IO_burst_completion_time);
-		#endif
+		//#ifdef DEBUG_MODE
+		printf ("   current process (%c) will finish I/O burst at %d ms\n", least_rem_IO_time_Process->id, IO_burst_completion_time);
+		//#endif
 	}
 	//if index is in array (it wouldn't be if we're on last process)
 	if (next_arrival_index < num_processes)
 	{
 		next_arrival_time = all_processes[next_arrival_index].arrival_time;
-		#ifdef DEBUG_MODE
-		printf ("next process arrives at time %d ms\n", next_arrival_time);
-		#endif
+		//#ifdef DEBUG_MODE
+		printf ("   next process arrives at time %d ms\n", next_arrival_time);
+		//#endif
 	}
 	
 	//if values don't apply, make them large enough to not be the minimum value
@@ -233,6 +233,24 @@ void print_ready_queue(int READY_QUEUE_size, struct process*** READY_QUEUE)
 		for (int i = 0; i < READY_QUEUE_size; i++)
 		{
 			printf("%c ", (*READY_QUEUE)[i]->id);
+		}
+		printf("]\n");
+	}
+}
+
+/*used for debugging processes*/
+void print_all_IO(int IO_PROCESSES_size, struct process*** IO_PROCESSES, int time)
+{
+	if (IO_PROCESSES_size == 0) 
+	{
+		printf("[IO <empty>]\n");
+	}
+	else
+	{
+		printf("[IO: ");
+		for (int i = 0; i < IO_PROCESSES_size; i++)
+		{
+			printf("|PROCESS %c -> finish time %d|", (*IO_PROCESSES)[i]->id,((*IO_PROCESSES)[i]->IO_remaining_time) + time);
 		}
 		printf("]\n");
 	}
@@ -428,9 +446,9 @@ int main( int argc, char** argv )
 			 function returns array that will only have multiple entries if multiple events occur at once*/
 			int* next_event_array = calloc(3, sizeof(int));
 			get_next_event(CPU_BURST_PROCESS, least_rem_IO_time_Process, all_processes, next_arrival_index, num_processes, &next_event_array, time);
-			#ifdef DEBUG_MODE
-			printf("next_event_array is [%d, %d, %d]\n", next_event_array[0],next_event_array[1], next_event_array[2]);
-			#endif
+			//#ifdef DEBUG_MODE
+			printf("\n\nnext_event_array is [%d, %d, %d]\n", next_event_array[0],next_event_array[1], next_event_array[2]);
+			//#endif
 			
 			/*next event is CPU burst finishes*/
 			if (next_event_array[0] == 1)
@@ -502,7 +520,6 @@ int main( int argc, char** argv )
 				//put it on to the ready queue. Logic for putting it into the queue will change in each alg.
 				time += least_rem_IO_time_Process->IO_remaining_time;
 				printf("time %dms: Process %c completed I/O; added to ready queue ", time, least_rem_IO_time_Process->id);
-				//time += (context_switch_time)/2;
 				queue_index = Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, "FCFS", least_rem_IO_time_Process);
 				//find and take process out of IO array
 				for (int i = 0; i < IO_PROCESSES_size; i++)
@@ -511,7 +528,7 @@ int main( int argc, char** argv )
 					{
 						for (int j = i; j < (IO_PROCESSES_size-1); j++)
 						{
-							(IO_PROCESSES)[i] = (IO_PROCESSES)[i+1];
+							(IO_PROCESSES)[j] = (IO_PROCESSES)[j+1];
 						}
 						(IO_PROCESSES_size) -= 1;
 						(IO_PROCESSES) = realloc(IO_PROCESSES, IO_PROCESSES_size*sizeof(struct process *));
@@ -552,7 +569,9 @@ int main( int argc, char** argv )
 					print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
 				}
 			}
-			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size);
+
+			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size);			
+			print_all_IO(IO_PROCESSES_size, &IO_PROCESSES, time);
 			update_next_IO_finish(&least_rem_IO_time_Process, &IO_PROCESSES, IO_PROCESSES_size);	
 				
 			finished = 1;
