@@ -18,6 +18,8 @@ struct process
 	int curr_CPU_index;
 	//will hold remaining time for current CPU burst
 	int CPU_remaining_time;
+	int switch_remaining_time;
+	int switch_start_time;
 	
 	//at what time did process enter CPU or I/O
 	int curr_CPU_arrival_time;
