@@ -487,8 +487,9 @@ int main( int argc, char** argv )
 	int finished = 0;
 	//time passed since start of the algorithm
 	int time = 0;
-	int queue_index;
+	int queue_index = 0;
 	int test_int = 0;
+	int* next_event_array = NULL;
 	
 	printf("time %dms: Simulator started for FCFS ", time);
 	print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
@@ -496,10 +497,22 @@ int main( int argc, char** argv )
 	//while (test_int != 569)
 	{
 		//test_int++;
+		/*initialize event_array to be all zeroes*/
 		#ifdef DEBUG_MODE
 		printf("\n\n");
 		#endif
-		int* next_event_array = calloc(5, sizeof(int));
+		if (next_event_array == NULL)
+		{
+			next_event_array = calloc(5, sizeof(int));
+		}
+		else
+		{
+			next_event_array = realloc(next_event_array, 5 * sizeof(int));
+			for (int i = 0; i < 5; i++)
+			{
+				next_event_array[i] = 0;
+			}
+		}
 		//get_next_event(CPU_BURST_PROCESS, least_rem_IO_time_Process, all_processes, next_arrival_index, num_processes, &next_event_array, time);
 		get_next_event(CPU_BURST_PROCESS, least_rem_IO_time_Process, all_processes, outof_CPU_switch, into_CPU_switch, next_arrival_index, num_processes, &next_event_array, time);
 		#ifdef DEBUG_MODE
@@ -526,7 +539,10 @@ int main( int argc, char** argv )
 			#ifdef DEBUG_MODE
 			printf("--time, %d: Now switching Process %c out of CPU\n", time, CPU_BURST_PROCESS->id);
 			#endif
-			CPU_BURST_PROCESS->curr_CPU_index += 1;
+			if (CPU_BURST_PROCESS->num_CPU_bursts_remaining > 0 )
+			{
+				CPU_BURST_PROCESS->curr_CPU_index += 1;
+			}
 			CPU_BURST_PROCESS->CPU_remaining_time = CPU_BURST_PROCESS->CPU_burst_times[CPU_BURST_PROCESS->curr_CPU_index];
 			//time += (context_switch_time)/2;
 			time += CPU_BURST_PROCESS->switch_remaining_time;
@@ -583,26 +599,7 @@ int main( int argc, char** argv )
 				printf("time %dms: Process %c switching out of CPU; will block on I/O until time %dms ", 
 					time, CPU_BURST_PROCESS->id, (time + (context_switch_time/2) + CPU_BURST_PROCESS->IO_remaining_time));
 				print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
-				#if 0
-				CPU_BURST_PROCESS->curr_CPU_index += 1;
-				CPU_BURST_PROCESS->CPU_remaining_time = CPU_BURST_PROCESS->CPU_burst_times[CPU_BURST_PROCESS->curr_CPU_index];
-				time += (context_switch_time)/2;
 				
-				/*switch process out of CPU and into I/O*/
-				IO_PROCESSES_size += 1;
-				if (IO_PROCESSES == NULL)
-				{
-					IO_PROCESSES = calloc(IO_PROCESSES_size, sizeof(struct process *));
-				}
-				else
-				{
-					IO_PROCESSES = realloc(IO_PROCESSES, IO_PROCESSES_size * sizeof(struct process *));
-				}
-				IO_PROCESSES[IO_PROCESSES_size-1] = CPU_BURST_PROCESS;
-				IO_PROCESSES[IO_PROCESSES_size-1]->curr_IO_arrival_time = time;
-				
-				CPU_BURST_PROCESS = NULL;
-				#endif
 				CPU_BURST_PROCESS->switch_start_time = time;
 				outof_CPU_switch = CPU_BURST_PROCESS;
 				update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time);
@@ -610,12 +607,6 @@ int main( int argc, char** argv )
 			else
 			{
 				printf("time %dms: Process %c terminated ", time, CPU_BURST_PROCESS->id);
-				#if 0
-				time += (context_switch_time)/2;
-				print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
-				CPU_BURST_PROCESS->terminated = 1;
-				CPU_BURST_PROCESS = NULL;
-				#endif
 				CPU_BURST_PROCESS->switch_start_time = time;
 				outof_CPU_switch = CPU_BURST_PROCESS;
 			}
@@ -662,19 +653,6 @@ int main( int argc, char** argv )
 		//if new process in front of ready queue and CPU is free, put process into CPU and take it out of the ready queue 
 		if ((READY_QUEUE_size > 0) && (CPU_BURST_PROCESS == NULL) && (into_CPU_switch == NULL))
 		{
-			/*
-			CPU_BURST_PROCESS = READY_QUEUE[0];
-			time += (context_switch_time)/2;
-			CPU_BURST_PROCESS->curr_CPU_arrival_time = time;
-			Advance_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size);
-			printf("time %dms: Process %c started using the CPU for %dms burst ", time, CPU_BURST_PROCESS->id, CPU_BURST_PROCESS->CPU_burst_times[CPU_BURST_PROCESS->curr_CPU_index]);
-			print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
-			*/
-			/*
-			CPU_BURST_PROCESS = READY_QUEUE[0];
-			CPU_BURST_PROCESS->switch_start_time = time;
-			Advance_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size);
-			*/
 			into_CPU_switch = READY_QUEUE[0];
 			into_CPU_switch->switch_start_time = time;
 			Advance_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size);
@@ -706,6 +684,16 @@ int main( int argc, char** argv )
 	}
 	printf("time %dms: Simulator ended for FCFS ", time);
 	print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
+	free(next_event_array);
+	for (int i = 0; i < num_processes; i++)
+	{
+		free(all_processes[i].CPU_burst_times);
+		free(all_processes[i].IO_burst_times);
+	}
+	free(all_processes);
+	free(READY_QUEUE);
+	free(IO_PROCESSES);
+	
 }
 
 
