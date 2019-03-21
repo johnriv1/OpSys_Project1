@@ -560,12 +560,12 @@ void FCFS_or_RR(int num_processes, double lambda, int seed, int upper_bound, int
 					CPU_BURST_PROCESS->terminated = 1;
 				}
 			}
-			/*if CPU burst hasnt finished, take it out of the CPU and put it into the Ready Queue*/
+			/*if CPU burst hasnt finished(it was preempted), take it out of the CPU and put it into the Ready Queue*/
 			else
 			{
 				time += CPU_BURST_PROCESS->switch_remaining_time;
 				//queue_index = Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, RRadd, CPU_BURST_PROCESS);
-				Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, RRadd, CPU_BURST_PROCESS);
+				Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, "END", CPU_BURST_PROCESS);
 			}
 			#ifdef DEBUG_MODE
 			printf("--time, %d: Switched Process %c out of CPU\n", time, CPU_BURST_PROCESS->id);
