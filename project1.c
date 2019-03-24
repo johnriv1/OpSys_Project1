@@ -7,13 +7,9 @@
 #include "process.h"
 /*
 Sample output:
-
 a.out 2 0.01 200 1 4 0.5 120 > output02.txt
-
 a.out 2 0.01 200 2 4 0.5 120 > output03.txt
-
 a.out 2 0.01 200 12 4 0.5 120 > output04.txt
-
 a.out 73 0.001 3000 12 4 0.5 950 > output05.txt
 */
 
@@ -38,6 +34,8 @@ void paramater_alg(double lambda, int upper_bound, struct process* proc)
 	(*proc).arrival_time = floor(exp_dist_eq(lambda, upper_bound));
 	(*proc).num_CPU_bursts = (trunc(drand48()*100) + 1);
 	(*proc).num_CPU_bursts_remaining = 	(*proc).num_CPU_bursts;
+	(*proc).turnaround_time = (int)(1/lambda);
+	(*proc).curr_CPU_index = 0;
 	/*allocate arrays for CPU and IO burst times. Last CPU burst does not have I/O burst time*/
 	(*proc).CPU_burst_times = calloc(((*proc).num_CPU_bursts), sizeof(int));
 	(*proc).IO_burst_times = calloc(((*proc).num_CPU_bursts-1), sizeof(int));
@@ -52,7 +50,8 @@ void paramater_alg(double lambda, int upper_bound, struct process* proc)
 	(*proc).terminated = 0;
 }
 
-void get_next_event(struct process* CPU_BURST_PROCESS, struct process* least_rem_IO_time_Process, struct process* all_processes, struct process* outof_CPU_switch, struct process* into_CPU_switch, int next_arrival_index, int num_processes, int ** next_event_array, int time, int time_slice_rem, char* alg)
+void get_next_event(struct process* CPU_BURST_PROCESS, struct process* least_rem_IO_time_Process, struct process* all_processes,
+ struct process* outof_CPU_switch, struct process* into_CPU_switch, int next_arrival_index, int num_processes, int ** next_event_array, int time, int time_slice_rem, char* alg)
 {
 	int CPU_burst_completion_time = 0;
 	int IO_burst_completion_time = 0;
@@ -173,7 +172,7 @@ void get_next_event(struct process* CPU_BURST_PROCESS, struct process* least_rem
 	{
 		(*next_event_array)[4] = 1;
 	}
-	if (strcmp(alg, "RR") == 0)
+	if (strcmp(alg, "RR") == 0)   // if equals RR algorithm  
 	{
 		if ((time_slice_completion_time <= CPU_burst_completion_time) && (time_slice_completion_time <= IO_burst_completion_time) && (time_slice_completion_time <= next_arrival_time) && (time_slice_completion_time <= outof_CPU_cs_completion_time) && (time_slice_completion_time <= into_CPU_cs_completion_time))
 		{
@@ -218,10 +217,10 @@ void Advance_Ready_Queue( struct process*** READY_QUEUE, int* READY_QUEUE_size )
 	#endif
 }
 
-int Add_to_Ready_Queue( struct process*** READY_QUEUE, int * READY_QUEUE_size, char* alg, struct process* incoming_Process)
+
+int Add_to_Ready_Queue( struct process*** READY_QUEUE, int * READY_QUEUE_size, char* alg, struct process* incoming_Process, char* algorithm)
 {
-	/*initialize it to arbitrary value, will get changedin one of the if statements*/
-	int queue_index=1;
+	/*initialize it to arbitrary value, will get changed in one of the if statements*/
 	#ifdef DEBUG_MODE
 	printf("Adding process with id %c\n", incoming_Process->id);
 	
@@ -232,39 +231,108 @@ int Add_to_Ready_Queue( struct process*** READY_QUEUE, int * READY_QUEUE_size, c
 	}
 	printf("]\n");
 	#endif
-	if (strcmp(alg, "END") == 0)
+	
+	int queue_index = 0;
+	if (strcmp(algorithm, "SJF") == 0 || strcmp(algorithm, "SRT") == 0)
 	{
 		//make ready queue one pointer bigger
-		(*READY_QUEUE_size) += 1;
-		(*READY_QUEUE) = realloc(*READY_QUEUE, (*READY_QUEUE_size)*sizeof(struct process *));
-		
-		//now last pointer in ready queue should point to the same struct that incoming_Process is pointing to (both point to a struct in all_processes);
-		(*READY_QUEUE)[(*READY_QUEUE_size)-1] = incoming_Process;
-		queue_index = ((*READY_QUEUE_size)-1);
-	}
-	else if (strcmp(alg, "BEGINNING") == 0)
-	{
 		(*READY_QUEUE) = realloc(*READY_QUEUE, (*READY_QUEUE_size+1)*sizeof(struct process *));
+
+		int incoming_turnaround_time = incoming_Process -> turnaround_time;
 		
-		/*shift everything over by 1, then inser new process into 0th position*/
-		for (int i = (*READY_QUEUE_size)-1; i >= 0; i--)
-		{
-			//printf("PROCESS IN INDEX %d PROCESS IS NOW IN INDEX %d\n", i, i+1);
-      	(*READY_QUEUE)[i+1] = (*READY_QUEUE)[i];
- 		}
- 		//printf("SHIFTED EVERYTHING IN READY QUEUE\n");
- 		(*READY_QUEUE_size) += 1;
-   	(*READY_QUEUE)[0] = incoming_Process;
-   	//printf("ADDED PROCESS %c TO FRONT OF QUEUE\n", (*READY_QUEUE)[0]->id);
-   	queue_index = 0;
-   	/*
-   	printf("Queue contents after adding to queue are [Q ");
-		for (int i = 0; i < (*READY_QUEUE_size); i++)
-		{
-			printf("%c ", (*READY_QUEUE)[i]->id); 
+		//find the index to insert the new process based on each processes' first cpu burst time
+		int temp_index = 0;
+
+		if ((*READY_QUEUE_size) > 0)
+		{	
+			for (int i = 0; i < (*READY_QUEUE_size); i++)
+			{
+				if (incoming_Process->id == 'A'){
+					//printf("\nProcess %c tau: %d, Process %c tau: %d\n", 'A', incoming_Process->turnaround_time, (*READY_QUEUE)[0]->id, (*READY_QUEUE)[0]->turnaround_time);
+				}
+				if( (*READY_QUEUE)[i]->turnaround_time < incoming_turnaround_time)
+				{
+					queue_index += 1;
+				}
+				
+				if ((*READY_QUEUE)[i]->turnaround_time == incoming_turnaround_time)
+				{				
+					while (i < (*READY_QUEUE_size))
+					{
+						if ((*READY_QUEUE)[i]->id < incoming_Process->id)
+						{
+							temp_index += 1;
+							i = i + 1;
+						}
+						else{
+							break;
+						}
+					}
+					queue_index += temp_index;
+					break;
+				}
+				
+				if( (*READY_QUEUE)[i]->turnaround_time > incoming_turnaround_time)
+				{
+					break;
+				}
+			}
 		}
-		printf("]\n");
-		*/
+		
+		else
+		{
+			(*READY_QUEUE_size) += 1;
+			(*READY_QUEUE)[(*READY_QUEUE_size)-1] = incoming_Process;
+			return queue_index;
+
+		}
+
+		//shift everything to make room to insert in queue_index
+		for (int i = (*READY_QUEUE_size)-1; i >= queue_index; i--)
+		{
+			(*READY_QUEUE)[i+1] = (*READY_QUEUE)[i];
+		}
+			
+		(*READY_QUEUE_size) += 1;
+		(*READY_QUEUE)[queue_index] = incoming_Process;
+	
+	}
+	else
+	{
+		if (strcmp(alg, "END") == 0)
+		{
+			//make ready queue one pointer bigger
+			(*READY_QUEUE_size) += 1;
+			(*READY_QUEUE) = realloc(*READY_QUEUE, (*READY_QUEUE_size)*sizeof(struct process *));
+			
+			//now last pointer in ready queue should point to the same struct that incoming_Process is pointing to (both point to a struct in all_processes);
+			(*READY_QUEUE)[(*READY_QUEUE_size)-1] = incoming_Process;
+			queue_index = ((*READY_QUEUE_size)-1);
+		}
+		else if (strcmp(alg, "BEGINNING") == 0)
+		{
+			(*READY_QUEUE) = realloc(*READY_QUEUE, (*READY_QUEUE_size+1)*sizeof(struct process *));
+			
+			/*shift everything over by 1, then insert new process into 0th position*/
+			for (int i = (*READY_QUEUE_size)-1; i >= 0; i--)
+			{
+				//printf("PROCESS IN INDEX %d PROCESS IS NOW IN INDEX %d\n", i, i+1);
+				(*READY_QUEUE)[i+1] = (*READY_QUEUE)[i];
+			}
+			//printf("SHIFTED EVERYTHING IN READY QUEUE\n");
+			(*READY_QUEUE_size) += 1;
+		(*READY_QUEUE)[0] = incoming_Process;
+		//printf("ADDED PROCESS %c TO FRONT OF QUEUE\n", (*READY_QUEUE)[0]->id);
+		queue_index = 0;
+		/*
+		printf("Queue contents after adding to queue are [Q ");
+			for (int i = 0; i < (*READY_QUEUE_size); i++)
+			{
+				printf("%c ", (*READY_QUEUE)[i]->id); 
+			}
+			printf("]\n");
+			*/
+		}
 	}
 	#ifdef DEBUG_MODE
 	printf("Queue contents after adding to queue are [Q ");
@@ -277,7 +345,8 @@ int Add_to_Ready_Queue( struct process*** READY_QUEUE, int * READY_QUEUE_size, c
 	return queue_index;
 }
 
-void update_remaining_times(struct process** CPU_BURST_PROCESS, struct process*** IO_PROCESSES, int time, int IO_PROCESSES_size, struct process** into_CPU_switch, struct process** outof_CPU_switch, int context_switch_time, int time_slice, int * time_slice_rem, int time_slice_start, char* alg)
+void update_remaining_times(struct process** CPU_BURST_PROCESS, struct process*** IO_PROCESSES, int time, int IO_PROCESSES_size,
+struct process** into_CPU_switch, struct process** outof_CPU_switch, int context_switch_time, int time_slice, int * time_slice_rem, int time_slice_start, char* alg)
 {
 	if (*CPU_BURST_PROCESS != NULL)
 	{
@@ -349,6 +418,7 @@ void update_next_IO_finish(struct process** least_rem_IO_time_Process, struct pr
 		(*least_rem_IO_time_Process) = NULL;
 	}
 
+
 }
 
 void print_ready_queue(int READY_QUEUE_size, struct process*** READY_QUEUE)
@@ -368,6 +438,7 @@ void print_ready_queue(int READY_QUEUE_size, struct process*** READY_QUEUE)
 	}
 }
 
+
 /*used for debugging processes*/
 void print_all_IO(int IO_PROCESSES_size, struct process*** IO_PROCESSES, int time)
 {
@@ -386,12 +457,13 @@ void print_all_IO(int IO_PROCESSES_size, struct process*** IO_PROCESSES, int tim
 	}
 }
 
-void FCFS_or_RR(int num_processes, double lambda, int seed, int upper_bound, int context_switch_time, int time_slice, char* RRadd, char* alg)
+void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, int context_switch_time, int time_slice, float alpha, char* RRadd, char* alg)
 {
 //for each process, get 4 random uniform distribution numbers from .1 to 1.0
 	//To get process arrival time, get first random number, plug it into exp-random.c
 	//To get number of CPU bursts, the second uniform distibution number is multiplied y 100, truncated, and incremented by 1
-	//For each of these cpu bursts, identify the actual CPU burst time and the I/O burst time asthe next two random numbers in the sequence; for the last CPU burst, do not generate anI/O burst time
+	//For each of these cpu bursts, identify the actual CPU burst time and the I/O burst time as the next two random numbers in the sequence; 
+	//For the last CPU burst, do not generate an I/O burst time
 	srand48( seed );
 	struct process* all_processes = calloc(num_processes, sizeof(struct process));
 	for (int i = 0, let = 'A'; i < num_processes; i++, let++)
@@ -429,8 +501,6 @@ void FCFS_or_RR(int num_processes, double lambda, int seed, int upper_bound, int
 	struct process* into_CPU_switch = NULL;
 	struct process* outof_CPU_switch = NULL;
 		
-	/* FIRST COME FIRST SERVE *////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////////////////////
 	/* following print has to be done before every algorithm*/
 	for (int i = 0; i < num_processes; i++)
 	{
@@ -565,7 +635,7 @@ void FCFS_or_RR(int num_processes, double lambda, int seed, int upper_bound, int
 			{
 				time += CPU_BURST_PROCESS->switch_remaining_time;
 				//queue_index = Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, RRadd, CPU_BURST_PROCESS);
-				Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, "END", CPU_BURST_PROCESS);
+				Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, "END", CPU_BURST_PROCESS, alg);
 			}
 			#ifdef DEBUG_MODE
 			printf("--time, %d: Switched Process %c out of CPU\n", time, CPU_BURST_PROCESS->id);
@@ -629,6 +699,13 @@ void FCFS_or_RR(int num_processes, double lambda, int seed, int upper_bound, int
 				{
 					printf("time %dms: Process %c completed a CPU burst; %d bursts to go ", time, CPU_BURST_PROCESS->id, CPU_BURST_PROCESS->num_CPU_bursts_remaining);
 					print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
+					
+					if (strcmp(alg, "SJF") == 0 || strcmp(alg, "SRT") == 0)
+					{
+						CPU_BURST_PROCESS->turnaround_time = (int)(ceil(alpha * CPU_BURST_PROCESS->CPU_burst_times[CPU_BURST_PROCESS->curr_CPU_index] + alpha * CPU_BURST_PROCESS->turnaround_time));
+						printf("time %dms: Recalculated tau = %dms for process %c ", time, CPU_BURST_PROCESS->turnaround_time, CPU_BURST_PROCESS->id);
+						print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
+					}
 				}
 				
 				CPU_BURST_PROCESS->curr_IO_index = CPU_BURST_PROCESS->curr_CPU_index;
@@ -661,9 +738,55 @@ void FCFS_or_RR(int num_processes, double lambda, int seed, int upper_bound, int
 			//put it on to the ready queue. Logic for putting it into the queue will change in each alg.
 			time += least_rem_IO_time_Process->IO_remaining_time;
 			if (time <= print_time_limit)
-				printf("time %dms: Process %c completed I/O; added to ready queue ", time, least_rem_IO_time_Process->id);
+			{
+				if (strcmp(alg, "SJF") == 0)
+				{
+					printf("time %dms: Process %c (tau %dms) completed I/O; added to ready queue ", time, least_rem_IO_time_Process->id, least_rem_IO_time_Process->turnaround_time);
+				}
+				
+				else if (strcmp(alg, "SRT") == 0)
+				{
+					if (CPU_BURST_PROCESS != NULL)
+					{
+						if (least_rem_IO_time_Process->CPU_burst_times[0] < CPU_BURST_PROCESS->CPU_burst_times[0])
+						{
+							printf("time %dms: Process %c (tau %dms) completed I/O and will preempt %c ", time, least_rem_IO_time_Process->id, least_rem_IO_time_Process->turnaround_time, CPU_BURST_PROCESS->id);
+							//printf("Switch start time is %d, time is %d\n", CPU_BURST_PROCESS->switch_start_time, time);
+							CPU_BURST_PROCESS->turnaround_time = CPU_BURST_PROCESS->turnaround_time - (time - CPU_BURST_PROCESS->switch_start_time-2);
+							/*
+							if (READY_QUEUE_size > 0 && READY_QUEUE != NULL)
+							{
+								for (int i = 0; i < READY_QUEUE_size; i++)
+								{
+									if ((*READY_QUEUE + i)->id == CPU_BURST_PROCESS->id)
+									{
+										(*READY_QUEUE + i)->turnaround_time = CPU_BURST_PROCESS->turnaround_time;
+										break;
+									}
+								}
+							}
+							*/
+							CPU_BURST_PROCESS->switch_start_time = time;
+							outof_CPU_switch = CPU_BURST_PROCESS;
+						}
+						else
+						{
+							printf("time %dms: Process %c (tau %dms) completed I/O; added to ready queue ", time, least_rem_IO_time_Process->id, least_rem_IO_time_Process->turnaround_time);
+						}
+					}
+					else
+					{
+						printf("time %dms: Process %c (tau %dms) completed I/O; added to ready queue ", time, least_rem_IO_time_Process->id, least_rem_IO_time_Process->turnaround_time);
+					}
+				}
+				
+				else
+				{
+					printf("time %dms: Process %c completed I/O; added to ready queue ", time, least_rem_IO_time_Process->id);
+				}
+			}
 			//queue_index = Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, RRadd, least_rem_IO_time_Process);
-			Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, RRadd, least_rem_IO_time_Process);
+			Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, RRadd, least_rem_IO_time_Process, alg);
 			//find and take process out of IO array
 			for (int i = 0; i < IO_PROCESSES_size; i++)
 			{
@@ -689,13 +812,20 @@ void FCFS_or_RR(int num_processes, double lambda, int seed, int upper_bound, int
 		{
 			//put it on to the ready queue. Logic for putting it into the queue will change in each alg.
 			//queue_index = Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, RRadd, &all_processes[next_arrival_index]);
-			Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, RRadd, &all_processes[next_arrival_index]);
+			Add_to_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size, RRadd, &all_processes[next_arrival_index], alg);
 			all_processes[next_arrival_index].curr_CPU_index = 0;
 			all_processes[next_arrival_index].CPU_remaining_time = all_processes[next_arrival_index].CPU_burst_times[0];
 			time = (all_processes[next_arrival_index].arrival_time);
 			if (time <= print_time_limit)
 			{
-				printf("time %dms: Process %c arrived; added to ready queue ", time, all_processes[next_arrival_index].id);
+				if (strcmp(alg, "SJF") == 0 || strcmp(alg, "SRT") == 0)
+				{
+					printf("time %dms: Process %c (tau %dms) arrived; added to ready queue ", time, all_processes[next_arrival_index].id, all_processes[next_arrival_index].turnaround_time);
+				}
+				else
+				{
+					printf("time %dms: Process %c arrived; added to ready queue ", time, all_processes[next_arrival_index].id);
+				}
 				print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
 			}
 			next_arrival_index += 1;
@@ -835,21 +965,20 @@ int main( int argc, char** argv )
 	double lambda = atof(argv[2]);
 	int upper_bound = atoi(argv[3]);
 	int context_switch_time = atoi(argv[5]);
-	//int alpha = atoi(argv[6]);
+	float alpha = atof(argv[6]);
 	int time_slice = atoi(argv[7]);
 	
-	/*
-	FCFS(num_processes, lambda, seed, upper_bound, context_switch_time);
+	
+	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "SJF");
 	printf("\n");
-	RR(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, RRadd, "RR");
-	*/
-	FCFS_or_RR(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, "END", "FCFS");
+	
+	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "SRT");
 	printf("\n");
-	FCFS_or_RR(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, RRadd, "RR");
+	
+	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "FCFS");
+	printf("\n");
+	
+	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, RRadd, "RR");
+	
 	return EXIT_SUCCESS;
 }
-
-
-
-
-
