@@ -6,13 +6,16 @@ struct process
 	int* IO_burst_times;
 	int arrival_time;
 	
+	int tau;
+	int tau_after_preempt;
+	int is_preempt;
 	int wait_time;
 	int turnaround_time;
 	int num_CPU_bursts_remaining;
 	
 	//will hold the index that denotes current IO burst from IO_burst_times
 	int curr_IO_index;
-	//will hold remaining time for current CPU burst
+	//will hold remaining time for current IO burst
 	int IO_remaining_time;
 	//will hold the index that denotes current CPU burst from CPU_burst_times
 	int curr_CPU_index;
