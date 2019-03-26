@@ -27,6 +27,8 @@ struct process
 	//at what time did process enter CPU or I/O
 	int curr_CPU_arrival_time;
 	int curr_IO_arrival_time;
+	int ready_queue_arrival_time;
+	int curr_CPU_first_arrival_time;
 	
 	/*where as CPU_remaining_time is the the time until burst finishes, with CPU_burst_times holding the initial burst time*/
 	/*The following value holds the burst time of the process when it last entered the CPU*/
