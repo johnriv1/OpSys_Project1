@@ -13,15 +13,6 @@ a.out 2 0.01 200 12 4 0.5 120 > output04.txt
 a.out 73 0.001 3000 12 4 0.5 950 > output05.txt
 */
 
-/*Andrew code
-int burst_counter = 0;
-int total_num_bursts = 0;
-int* sjf_bursts;
-int* srt_bursts;
-int* fcfs_bursts;
-int* rr_bursts;
-
-*/
 double exp_dist_eq(double lambda, int upper_bound)
 {
 	int iterations = 1;
@@ -640,29 +631,6 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 	int time_slice_rem = time_slice;
 	int time_slice_start;
 	int print_time_limit = 999;
-	/*Andrew code
-	//for (int i = 0; i < num_processes; i++)
-	//{
-	//	total_num_bursts += all_processes[i].num_CPU_bursts;
-	//}
-	total_num_bursts = all_processes[0].num_CPU_bursts;
-
-	if (strcmp(alg, "SJF") == 0)
-	{
-		sjf_bursts = calloc(total_num_bursts, sizeof(int));	
-	}
-	if (strcmp(alg, "SRT") == 0)
-	{
-		srt_bursts = calloc(total_num_bursts, sizeof(int));		
-	}
-	if (strcmp(alg, "FCFS") == 0)
-	{
-		fcfs_bursts = calloc(total_num_bursts, sizeof(int));		
-	}
-	if (strcmp(alg, "SJF") == 0)
-	{
-		rr_bursts = calloc(total_num_bursts, sizeof(int));			
-	}*/
 	
 	printf("time %dms: Simulator started for %s ", time, alg);
 	print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
@@ -702,31 +670,6 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 			CPU_BURST_PROCESS->curr_CPU_arrival_time = time;
 			CPU_BURST_PROCESS->curr_CPU_initial_rem_time = CPU_BURST_PROCESS->CPU_remaining_time;
 			//Advance_Ready_Queue(&READY_QUEUE, &READY_QUEUE_size);
-			/*Andrew code
-			if (CPU_BURST_PROCESS->CPU_remaining_time == CPU_BURST_PROCESS->CPU_burst_times[CPU_BURST_PROCESS->curr_CPU_index])
-			{
-				if (strcmp(alg, "SJF") == 0)
-				{
-					sjf_bursts[burst_counter] = CPU_BURST_PROCESS->CPU_remaining_time;
-				}
-
-				if (strcmp(alg, "SRT") == 0)
-				{
-					srt_bursts[burst_counter] = CPU_BURST_PROCESS->CPU_remaining_time;
-				}
-
-				if (strcmp(alg, "FCFS") == 0)
-				{
-					fcfs_bursts[burst_counter] = CPU_BURST_PROCESS->CPU_remaining_time;
-				}
-
-				if (strcmp(alg, "RR") == 0)
-				{
-					rr_bursts[burst_counter] = CPU_BURST_PROCESS->CPU_remaining_time;
-				}
-
-				burst_counter++;
-			}*/
 			if (time <= print_time_limit)
 			{
 				if (CPU_BURST_PROCESS->CPU_remaining_time == CPU_BURST_PROCESS->CPU_burst_times[CPU_BURST_PROCESS->curr_CPU_index])
@@ -1056,71 +999,6 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 	free(IO_PROCESSES);
 }
 
-void print_summary()
-{
-	/* Andrew code
-	float sjf_burst_avg = 0;
-	float srt_burst_avg = 0;
-	float fcfs_burst_avg = 0;
-	float rr_burst_avg = 0;
-
-	//printf("total # of bursts: %d\n", total_num_bursts);
-	
-	for (int i = 0; i < total_num_bursts; ++i)
-	{
-		sjf_burst_avg += sjf_bursts[i];
-		srt_burst_avg += srt_bursts[i];
-		fcfs_burst_avg += fcfs_bursts[i];
-		rr_burst_avg += rr_bursts[i];
-	}
-
-	sjf_burst_avg /= (float)total_num_bursts;
-	srt_burst_avg /= (float)total_num_bursts;
-	fcfs_burst_avg /= (float)total_num_bursts;
-	rr_burst_avg /= (float)total_num_bursts;*/
-
-	FILE *summary;
-	summary = fopen("simout.txt", "a");
-	// SJF
-	fprintf(summary, "Algorithm SJF\n");
-	/*Andrew code
-	fprintf(summary, "-- average CPU burst time: %f ms\n", sjf_burst_avg);*/
-	fprintf(summary, "-- average CPU burst time: 0 ms\n");
-	fprintf(summary, "-- average wait time: 0 ms\n");
-	fprintf(summary, "-- average turnaround time: 0 ms\n");
-	fprintf(summary, "-- total number of context switches: 0\n");
-	fprintf(summary, "-- total number of preemptions: 0\n");
-	// SRT
-	fprintf(summary, "Algorithm SRT\n");
-	/*Andrew code
-	fprintf(summary, "-- average CPU burst time: %f ms\n", srt_burst_avg);*/
-	fprintf(summary, "-- average CPU burst time: 0 ms\n");
-	fprintf(summary, "-- average wait time: 0 ms\n");
-	fprintf(summary, "-- average turnaround time: 0 ms\n");
-	fprintf(summary, "-- total number of context switches: 0\n");
-	fprintf(summary, "-- total number of preemptions: 0\n");
-	// FCFS
-	fprintf(summary, "Algorithm FCFS\n");
-	/*Andrew code
-	fprintf(summary, "-- average CPU burst time: %f ms\n", fcfs_burst_avg);*/
-	fprintf(summary, "-- average CPU burst time: 0 ms\n");
-	fprintf(summary, "-- average wait time: 0 ms\n");
-	fprintf(summary, "-- average turnaround time: 0 ms\n");
-	fprintf(summary, "-- total number of context switches: 0\n");
-	fprintf(summary, "-- total number of preemptions: 0\n");
-	// RR
-	fprintf(summary, "Algorithm RR\n");
-	/*Andrew code
-	fprintf(summary, "-- average CPU burst time: %f ms\n", rr_burst_avg);*/
-	fprintf(summary, "-- average CPU burst time: 0 ms\n");
-	fprintf(summary, "-- average wait time: 0 ms\n");
-	fprintf(summary, "-- average turnaround time: 0 ms\n");
-	fprintf(summary, "-- total number of context switches: 0\n");
-	fprintf(summary, "-- total number of preemptions: 0\n");
-	//close file
-	fclose(summary);
-}
-
 int main( int argc, char** argv ) 
 {
 
@@ -1216,22 +1094,13 @@ int main( int argc, char** argv )
 	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "SJF");
 	printf("\n");
 	
-	// UNCOMMENT ONCE SRT IS WORKING
-	//all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "SRT");
-	//printf("\n");
+	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "SRT");
+	printf("\n");
 	
 	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "FCFS");
 	printf("\n");
 	
 	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, RRadd, "RR");
-
-	print_summary();
-
-	/*Andrew code
-	free(sjf_bursts);
-	free(srt_bursts);
-	free(fcfs_bursts);
-	free(rr_bursts);*/
 	
 	return EXIT_SUCCESS;
 }
