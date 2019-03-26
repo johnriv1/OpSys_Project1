@@ -1,3 +1,10 @@
+/*
+Team Members:
+John Rivera (riverj5)
+Qixiang Chen (chenq7)
+Andrew Gaudet (gaudea)
+*/
+
 #include <stdio.h>  /* printf */
 #include <stdlib.h> /* EXIT_SUCCESS, EXIT_FAILURE, malloc, free */
 #include <string.h> /* strlen, strcpy, etc. */
