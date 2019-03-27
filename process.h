@@ -6,9 +6,10 @@ struct process
 	int* IO_burst_times;
 	int arrival_time;
 	
+	int initial_tau;
 	int tau;
-	int tau_after_preempt;
-	int is_preempt;
+	//int tau_after_preempt;
+	//int is_preempt;
 	int wait_time;
 	int turnaround_time;
 	int num_CPU_bursts_remaining;
@@ -27,6 +28,8 @@ struct process
 	//at what time did process enter CPU or I/O
 	int curr_CPU_arrival_time;
 	int curr_IO_arrival_time;
+	int ready_queue_arrival_time;   // new
+	int curr_CPU_first_arrival_time;  // new
 	
 	/*where as CPU_remaining_time is the the time until burst finishes, with CPU_burst_times holding the initial burst time*/
 	/*The following value holds the burst time of the process when it last entered the CPU*/
@@ -34,6 +37,7 @@ struct process
 	
 	/*if 0, process is not terminated. If 1, process has terminated*/
 	int terminated ;
+	
 	
 };
 
