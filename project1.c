@@ -11,7 +11,7 @@ Andrew Gaudet (gaudea)
 #include <ctype.h> /* isalnum, isdigit */ 
 #include <math.h> /* trunc */
 
-#include "process_3.h"
+#include "process.h"
 /*
 Sample output:
 a.out 2 0.01 200 1 4 0.5 120 > output02.txt
