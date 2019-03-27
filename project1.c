@@ -1047,7 +1047,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 	fprintf(summary, "wait times average is %f\n", av_wait_time);
 
 	/*TURN AROUND TIME AVERAGE CALCULATION*/
-	int turnaround_time_total;
+	int turnaround_time_total = 0;
 	for (int i = 0; i < num_processes; i++)
 	{
 		turnaround_time_total += all_processes[i].turnaround_time;
