@@ -333,9 +333,9 @@ int Add_to_Ready_Queue( struct process*** READY_QUEUE, int * READY_QUEUE_size, c
 }
 
 void update_remaining_times(struct process** CPU_BURST_PROCESS, struct process*** IO_PROCESSES, int time, int IO_PROCESSES_size,
-struct process** into_CPU_switch, struct process** outof_CPU_switch, int context_switch_time, int time_slice, int * time_slice_rem, int time_slice_start, char* alg)
+struct process** into_CPU_switch, struct process** outof_CPU_switch, int context_switch_time, int time_slice, int * time_slice_rem, int time_slice_start, char* alg, int flag)
 {
-	if (*CPU_BURST_PROCESS != NULL)
+	if ((*CPU_BURST_PROCESS != NULL) && (flag != 1))
 	{
 		//total(original) CPU Burst time - (current time - CPU arrival time)
 		//(*CPU_BURST_PROCESS)->CPU_remaining_time = (*CPU_BURST_PROCESS)->CPU_burst_times[(*CPU_BURST_PROCESS)->curr_CPU_index] - (time-((*CPU_BURST_PROCESS)->curr_CPU_arrival_time));
@@ -528,10 +528,11 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 	int* next_event_array = NULL;
 	int time_slice_rem = time_slice;
 	int time_slice_start;
-	int print_time_limit = 999;
+	int print_time_limit = 99999;
 	int context_switch_count = 0;
 	int num_preemptions = 0;
 	int from_IO_to_preempt = 0;
+	int flag = 0;
 	
 	printf("time %dms: Simulator started for %s ", time, alg);
 	print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
@@ -594,13 +595,14 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 			#ifdef DEBUG_MODE
 			printf("TIME SLICE OF %d STARTS AT %d AND WILL END AT %d\n", time_slice, time_slice_start, time+time_slice_rem);
 			#endif
-			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg);
+			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg, flag);
 			//printf("1HELLO\n");
 		}
 		/*next event is context switch out of CPU finishes */
 		if (next_event_array[4] == 1)
 		{
 			/*if CPU burst finished, take it out of CPU and put it into IO*/
+			flag = 0;
 			if (CPU_BURST_PROCESS->CPU_remaining_time <= 0)
 			{
 				#ifdef DEBUG_MODE
@@ -647,7 +649,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 			#endif
 			CPU_BURST_PROCESS = NULL;
 			outof_CPU_switch = NULL;
-			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg);
+			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg, flag);
 		}
 		/*next event is time slice expires*/
 		if (next_event_array[5] == 1)
@@ -683,7 +685,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 				#endif
 			}
 			
-			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg);
+			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg, flag);
 		}
 		/*next event is CPU burst finishes*/
 		if (next_event_array[0] == 1)
@@ -750,7 +752,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 				
 				CPU_BURST_PROCESS->switch_start_time = time;
 				outof_CPU_switch = CPU_BURST_PROCESS;
-				update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg);
+				update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg, flag);
 			}
 			else
 			{
@@ -801,7 +803,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 				if ((CPU_BURST_PROCESS != NULL) && (into_CPU_switch == NULL) && (outof_CPU_switch == NULL) && (least_rem_IO_time_Process->id == READY_QUEUE[0]->id))
 				{
 					update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, 
-						context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg);
+						context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg, flag);
 					if (READY_QUEUE[0]->tau_remaining < CPU_BURST_PROCESS->tau_remaining)
 					{
 						from_IO_to_preempt = 1;
@@ -829,7 +831,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 					print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
 				}
 			}
-			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg);
+			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg, flag);
 		}
 		/*next event is process arrival*/
 		if (next_event_array[2] == 1)
@@ -876,7 +878,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 		{
 			//printf("3HELLO\n");
 			update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, 
-				context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg);
+				context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg, flag);
 			if (READY_QUEUE[0]->tau_remaining < CPU_BURST_PROCESS->tau_remaining)
 			{
 				if (from_IO_to_preempt == 0)
@@ -895,6 +897,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 						print_ready_queue(READY_QUEUE_size, &READY_QUEUE);
 					}
 					from_IO_to_preempt = 0;
+					flag = 1;
 				}	
 				CPU_BURST_PROCESS->switch_start_time = time;
 				outof_CPU_switch = CPU_BURST_PROCESS;
@@ -902,7 +905,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 		}
 		
 		//update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size);	
-		update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg);
+		update_remaining_times(&CPU_BURST_PROCESS, &IO_PROCESSES, time, IO_PROCESSES_size, &into_CPU_switch, &outof_CPU_switch, context_switch_time, time_slice, &time_slice_rem, time_slice_start, alg, flag);
 		#ifdef DEBUG_MODE	
 		print_all_IO(IO_PROCESSES_size, &IO_PROCESSES, time);
 		#endif
@@ -952,7 +955,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 	fprintf(summary, "-- average wait time: %.3f ms\n", av_wait_time);
 
 	/*TURN AROUND TIME AVERAGE CALCULATION*/
-	int turnaround_time_total;
+	int turnaround_time_total = 0;
 	for (int i = 0; i < num_processes; i++)
 	{
 		turnaround_time_total += all_processes[i].turnaround_time;
@@ -1072,16 +1075,16 @@ int main( int argc, char** argv )
 	FILE *summary;
 	summary = fopen("simout.txt", "w");
 	
-	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "SJF", summary);
+	//all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "SJF", summary);
 	printf("\n");
 	
 	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "SRT", summary);
 	printf("\n");
 	
-	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "FCFS", summary);
+	//all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "FCFS", summary);
 	printf("\n");
 	
-	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, RRadd, "RR", summary);
+	//all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, RRadd, "RR", summary);
 	
 	fclose(summary);
 	
