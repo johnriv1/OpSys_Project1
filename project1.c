@@ -1035,7 +1035,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 		}
 	}	
 	float av_CPU_burst_times = CPU_burst_times_total / (CPU_burst_num_total * 1.0);		
-	fprintf(summary, "-- average CPU burst time: %.3f\n", av_CPU_burst_times);
+	fprintf(summary, "-- average CPU burst time: %.3f ms\n", av_CPU_burst_times);
 	
 	/*WAIT TIME AVERAGE CALCULATION*/
 	int wait_time_total = 0;
@@ -1044,7 +1044,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 		wait_time_total += all_processes[i].wait_time;
 	}
 	float av_wait_time = wait_time_total/(CPU_burst_num_total*1.0);
-	fprintf(summary, "-- average wait time: %.3f\n", av_wait_time);
+	fprintf(summary, "-- average wait time: %.3f ms\n", av_wait_time);
 
 	/*TURN AROUND TIME AVERAGE CALCULATION*/
 	int turnaround_time_total = 0;
@@ -1053,7 +1053,7 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 		turnaround_time_total += all_processes[i].turnaround_time;
 	}
 	float av_turnaround_time = turnaround_time_total / (CPU_burst_num_total*1.0);
-	fprintf(summary, "-- average turnaround time: %.3f\n", av_turnaround_time);
+	fprintf(summary, "-- average turnaround time: %.3f ms\n", av_turnaround_time);
 	
 	/*TOTAL NUMBER OF CONTEXT SWITCHES*/
 	fprintf(summary, "-- total number of context switches: %d\n", context_switch_count);
@@ -1170,8 +1170,8 @@ int main( int argc, char** argv )
 	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "SJF", summary);
 	printf("\n");
 	
-	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "SRT", summary);
-	printf("\n");
+	//all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "SRT", summary);
+	//printf("\n");
 	
 	all_algorithm(num_processes, lambda, seed, upper_bound, context_switch_time, time_slice, alpha, "END", "FCFS", summary);
 	printf("\n");
