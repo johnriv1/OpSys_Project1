@@ -818,11 +818,11 @@ void all_algorithm(int num_processes, double lambda, int seed, int upper_bound, 
 			{
 				if (time <= print_time_limit)
 				{
-					if (strcmp("SRT", alg) != 0)
+					if ((strcmp("SRT", alg) != 0) && (strcmp("SJF", alg) != 0))
 					{
 						printf("time %dms: Process %c completed I/O; added to ready queue ", time, least_rem_IO_time_Process->id);
 					}
-					else if (strcmp("SRT", alg) == 0)
+					else if (((strcmp("SRT", alg) == 0) || (strcmp("SJF", alg) == 0)))
 					{
 						printf("time %dms: Process %c (tau %dms) completed I/O; added to ready queue ", time, least_rem_IO_time_Process->id, least_rem_IO_time_Process->tau_remaining);
 					}
